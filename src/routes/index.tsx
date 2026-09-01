@@ -65,12 +65,16 @@ function Home() {
             </p>
           </section>
 
-          <section className="flex items-stretch gap-2">
-            <div className="flex-1 rounded-full bg-mooney-green px-5 py-3">
-              <p className="text-[14px] font-medium text-mooney-black">Gastos Atuais</p>
-              <p className="text-[11px] font-medium text-mooney-black-50">Agosto/2026</p>
-            </div>
-            <div className="flex items-center rounded-full bg-mooney-gray px-6">
+          <section className="relative h-[58px] overflow-hidden rounded-full bg-mooney-gray">
+            <div
+              className="absolute inset-y-0 left-0 bg-mooney-green transition-all duration-500"
+              style={{ width: `${usage}%` }}
+            />
+            <div className="relative z-10 flex h-full items-center justify-between px-5">
+              <div>
+                <p className="text-[14px] font-medium text-mooney-black">Gastos Atuais</p>
+                <p className="text-[11px] font-medium text-mooney-black-50">Agosto/2026</p>
+              </div>
               <span className="text-[14px] font-medium text-mooney-black">{usage}%</span>
             </div>
           </section>
