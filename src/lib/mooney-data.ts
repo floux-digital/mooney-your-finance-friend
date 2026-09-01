@@ -15,7 +15,10 @@ export type MooneyData = {
     currentExpenses: number;
     budgetLimit: number;
     predictedEndMonthBalance: number;
-    monthlySavingsRecommendation: number;
+    monthlySavingsRecommendation: {
+      total: number,
+      transationsIds: string[];
+    }
   };
   recommendation: { title: string; description: string };
   transactions: Transaction[];
@@ -31,16 +34,104 @@ export const defaultMooneyData: MooneyData = {
     currentExpenses: 12580.0,
     budgetLimit: 17482.0,
     predictedEndMonthBalance: 14200.0,
-    monthlySavingsRecommendation: 96.0,
+    monthlySavingsRecommendation: {
+      total: 96.0,
+      transationsIds: ["5", "11"]
+    }
   },
   recommendation: {
     title: "Reduza R$ 96 / mês",
-    description: "Identificamos assinaturas duplicadas e tarifas bancárias evitáveis.",
+    description: "Algumas assinaturas de streaming poderiam ser canceladas",
   },
   transactions: [
-    { id: "1", description: "Supermercado", amount: 450.0, type: "expense", category: "Alimentação", date: "2026-08-28" },
-    { id: "2", description: "Restaurante", amount: 120.0, type: "expense", category: "Alimentação", date: "2026-08-29" },
-    { id: "3", description: "Posto de Combustível", amount: 210.0, type: "expense", category: "Transporte", date: "2026-08-30" },
+    {
+      id: "1",
+      description: "Supermercado",
+      amount: 450.0,
+      type: "expense",
+      category: "Alimentação",
+      date: "2026-08-28"
+    },
+    {
+      id: "2",
+      description: "Restaurante",
+      amount: 120.0,
+      type: "expense",
+      category: "Alimentação",
+      date: "2026-08-29"
+    },
+    {
+      id: "3",
+      description: "Posto de Combustível",
+      amount: 210.0,
+      type: "expense",
+      category: "Transporte",
+      date: "2026-08-30"
+    },
+    {
+      id: "4",
+      description: "Salário",
+      amount: 8900.00,
+      type: "income",
+      category: "Salário",
+      date: "2026-08-01"
+    },
+    {
+      id: "5",
+      description: "Netflix",
+      amount: 55.90,
+      type: "expense",
+      category: "Assinaturas",
+      date: "2026-08-05"
+    },
+    {
+      id: "6",
+      description: "Aluguel",
+      amount: 2150.00,
+      type: "expense",
+      category: "Moradia",
+      date: "2026-08-01"
+    },
+    {
+      id: "7",
+      description: "Conta de Luz",
+      amount: 180.00,
+      type: "expense",
+      category: "Moradia",
+      date: "2026-08-10"
+    },
+    {
+      id: "8",
+      description: "Internet",
+      amount: 120.00,
+      type: "expense",
+      category: "Moradia",
+      date: "2026-08-01"
+    },
+    {
+      id: "9",
+      description: "Supermercado",
+      amount: 280.00,
+      type: "expense",
+      category: "Alimentação",
+      date: "2026-08-15"
+    },
+    {
+      id: "10",
+      description: "Amazon Prime",
+      amount: 35.00,
+      type: "expense",
+      category: "Assinaturas",
+      date: "2026-08-20"
+    },
+    {
+      id: "11",
+      description: "Premiere",
+      amount: 40.10,
+      type: "expense",
+      category: "Assinaturas",
+      date: "2026-08-20"
+    }
   ],
 };
 

@@ -32,13 +32,14 @@ function Home() {
   return (
     <PhoneFrame>
       <div className="flex flex-1 flex-col px-5 pt-14">
-        <h1 className="text-center text-[32px] font-normal leading-[36px] text-mooney-black">
-          Você tem nova recomendação
-        </h1>
-
+        <div className="flex flex-grow items-center justify-center">
+          <h1 className="text-center text-[32px] font-normal leading-[36px] text-mooney-black">
+            Você tem nova recomendação
+          </h1>
+        </div>
         <div className="mt-auto flex flex-col gap-2 pb-2">
           <section className="rounded-[24px] bg-mooney-gray p-5">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <h2 className="text-[13px] font-semibold text-mooney-black">Saldo Global R$</h2>
               <div className="flex shrink-0 gap-2">
                 <button
@@ -57,7 +58,7 @@ function Home() {
                 </button>
               </div>
             </div>
-            <p className="mt-10 text-right text-[32px] font-semibold text-mooney-black">
+            <p className="mt-10 text-right text-[32px] leading-[1.25] font-semibold text-mooney-black">
               {formatBRL(summary.globalBalance)}
             </p>
             <p className="text-right text-[11px] font-semibold text-mooney-black-50">
@@ -65,15 +66,15 @@ function Home() {
             </p>
           </section>
 
-          <section className="relative h-[58px] overflow-hidden rounded-full bg-mooney-gray">
+          <section className="relative h-[64px] overflow-hidden rounded-[24px] bg-mooney-gray">
             <div
-              className="absolute inset-y-0 left-0 bg-mooney-green transition-all duration-500"
+              className="absolute inset-y-0 left-0 bg-mooney-green rounded-[24px] transition-all duration-500"
               style={{ width: `${usage}%` }}
             />
             <div className="relative z-10 flex h-full items-center justify-between px-5">
               <div>
-                <p className="text-[14px] font-medium text-mooney-black">Gastos Atuais</p>
-                <p className="text-[11px] font-medium text-mooney-black-50">Agosto/2026</p>
+                <p className="text-[14px] leading-[1.25] font-medium text-mooney-black">Gastos Atuais</p>
+                <p className="text-[11px] leading-[1.25] font-medium text-mooney-black-50">Agosto/2026</p>
               </div>
               <span className="text-[14px] font-medium text-mooney-black">{usage}%</span>
             </div>
@@ -81,8 +82,8 @@ function Home() {
 
           <section className="flex items-center justify-between gap-3 rounded-[24px] bg-mooney-gray py-2 pl-5 pr-2">
             <div className="min-w-0">
-              <p className="truncate text-[14px] font-medium text-mooney-black">Recomendação</p>
-              <p className="truncate text-[11px] font-medium text-mooney-black-50">
+              <p className="truncate text-[14px] leading-[1.25] font-medium text-mooney-black">Recomendação</p>
+              <p className="truncate text-[11px] leading-[1.25] font-medium text-mooney-black-50">
                 {recommendation.title}
               </p>
             </div>
@@ -91,7 +92,7 @@ function Home() {
               aria-label="Ver recomendação"
               className="flex h-[58px] w-[66px] shrink-0 items-center justify-center rounded-[20px] bg-mooney-black"
             >
-              <Icon name="novo" size={32} invert />
+              <Icon name="topRight" size={32} />
             </Link>
           </section>
         </div>

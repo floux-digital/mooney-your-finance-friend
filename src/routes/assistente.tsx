@@ -1,10 +1,11 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { PhoneFrame } from "@/components/mooney/PhoneFrame";
 import { Icon } from "@/components/mooney/icons";
 import { useMooneyData } from "@/hooks/use-mooney-data";
 import { addTransaction, formatBRL } from "@/lib/mooney-data";
-import { askFinancialAgent, getOpenAIKey, setOpenAIKey, transcribeAudio } from "@/lib/openai";
+import { askFinancialAgent } from "@/lib/agent";
+import { transcribeAudio } from "@/lib/transcription";
 
 export const Route = createFileRoute("/assistente")({
   head: () => ({
@@ -48,9 +49,6 @@ function Assistant() {
   const router = useRouter();
   const data = useMooneyData();
 
-  const [apiKey, setApiKey] = useState("");
-  const [keyDraft, setKeyDraft] = useState("");
-  const [showKeyModal, setShowKeyModal] = useState(false);
   const [showTextInput, setShowTextInput] = useState(false);
   const [text, setText] = useState("");
 
@@ -63,19 +61,13 @@ function Assistant() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  useEffect(() => {
-    const stored = getOpenAIKey();
-    setApiKey(stored);
-    setKeyDraft(stored);
-  }, []);
-
   async function runAgent(message: string) {
     if (!message.trim()) return;
     setTranscript(message);
     setBusy("pensando");
     setError(null);
     try {
-      const result = await askFinancialAgent(message, data, apiKey);
+      const result = await askFinancialAgent({ data: { message, data } });
       if (result.newTransaction) addTransaction(result.newTransaction);
       setReply(result.reply);
     } catch (e) {
@@ -86,10 +78,6 @@ function Assistant() {
   }
 
   async function startRecording() {
-    if (!apiKey) {
-      setShowKeyModal(true);
-      return;
-    }
     setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -107,15 +95,25 @@ function Assistant() {
         }
         setBusy("transcrevendo");
         try {
-          const said = await transcribeAudio(blob, apiKey);
+          const buffer = await blob.arrayBuffer();
+          let binary = "";
+          const bytes = new Uint8Array(buffer);
+          const chunkSize = 0x8000;
+          for (let i = 0; i < bytes.length; i += chunkSize) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+          }
+          const audioBase64 = btoa(binary);
+          const said = await transcribeAudio({
+            data: { audioBase64, mimeType: blob.type || "audio/webm" },
+          });
           if (!said) {
             setError("Não consegui entender o áudio.");
-            setBusy(false);
             return;
           }
           await runAgent(said);
         } catch (e) {
           setError(e instanceof Error ? e.message : "Erro na transcrição");
+        } finally {
           setBusy(false);
         }
       };
@@ -185,13 +183,6 @@ function Assistant() {
           <p className="mt-2 text-[16px] font-normal text-mooney-black">
             {recording ? "Estou ouvindo… toque para enviar" : "Vamos lá, o Mooney já te ouvindo"}
           </p>
-          <button
-            type="button"
-            onClick={() => setShowKeyModal(true)}
-            className="mt-6 text-[12px] font-semibold text-mooney-black-50 underline"
-          >
-            {apiKey ? "Alterar chave da OpenAI" : "Configurar chave da OpenAI"}
-          </button>
         </div>
       )}
 
@@ -200,10 +191,6 @@ function Assistant() {
           className="flex items-center gap-2 px-5 pb-3"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!apiKey) {
-              setShowKeyModal(true);
-              return;
-            }
             const msg = text;
             setText("");
             void runAgent(msg);
@@ -264,44 +251,6 @@ function Assistant() {
           <Icon name="upload" size={24} />
         </button>
       </div>
-
-      {showKeyModal && (
-        <div className="absolute inset-0 z-50 flex items-end justify-center bg-mooney-black/40 p-4">
-          <div className="w-full rounded-[24px] bg-mooney-gray p-5">
-            <h2 className="text-[16px] font-semibold text-mooney-black">Chave da OpenAI</h2>
-            <p className="mt-1 text-[12px] text-mooney-black-50">
-              A chave fica salva apenas no seu navegador (LocalStorage).
-            </p>
-            <input
-              type="password"
-              value={keyDraft}
-              onChange={(e) => setKeyDraft(e.target.value)}
-              placeholder="sk-..."
-              className="mt-4 h-12 w-full rounded-full bg-white px-5 text-[14px] text-mooney-black outline-none"
-            />
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowKeyModal(false)}
-                className="h-12 flex-1 rounded-full bg-mooney-black/10 text-[14px] font-semibold text-mooney-black"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpenAIKey(keyDraft);
-                  setApiKey(keyDraft.trim());
-                  setShowKeyModal(false);
-                }}
-                className="h-12 flex-1 rounded-full bg-mooney-black text-[14px] font-semibold text-mooney-gray"
-              >
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </PhoneFrame>
   );
 }

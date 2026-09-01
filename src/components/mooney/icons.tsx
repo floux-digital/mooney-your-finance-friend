@@ -12,6 +12,7 @@ import upload from "@/assets/icons/upload.svg";
 import left from "@/assets/icons/left.svg";
 import like from "@/assets/icons/like.svg";
 import dislike from "@/assets/icons/dislike.svg";
+import topRight from "@/assets/icons/topRight.svg";
 
 export const icons = {
   brand,
@@ -28,6 +29,7 @@ export const icons = {
   left,
   like,
   dislike,
+  topRight,
 };
 
 export function Icon({
