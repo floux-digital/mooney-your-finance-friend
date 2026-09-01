@@ -2,6 +2,8 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { PhoneFrame } from "@/components/mooney/PhoneFrame";
 import { Icon } from "@/components/mooney/icons";
+import waveOn from "@/assets/waveOn.svg";
+import waveOff from "@/assets/waveOff.svg";
 import { useMooneyData } from "@/hooks/use-mooney-data";
 import { addTransaction, formatBRL } from "@/lib/mooney-data";
 import { askFinancialAgent } from "@/lib/agent";
@@ -16,7 +18,7 @@ export const Route = createFileRoute("/assistente")({
         content:
           "Fale com o assistente de voz do Mooney e receba respostas sobre saldo, gastos e previsões do mês.",
       },
-      { property: "og:title", content: "Assistente Mooney — Converse sobre suas finanças" },
+      { property: "og:title", content: "Mooney — Suas finanças pessoais em um só lugar" },
       {
         property: "og:description",
         content: "Assistente de voz para saldo, gastos e previsões do mês.",
@@ -25,6 +27,8 @@ export const Route = createFileRoute("/assistente")({
   }),
   component: Assistant,
 });
+
+type AssistantState = "initial" | "listening" | "processing" | "conversation";
 
 function Waveform({ active }: { active?: boolean }) {
   const bars = [10, 16, 8, 20, 12, 18, 9, 16, 11, 19, 8, 14];
@@ -45,6 +49,25 @@ function Waveform({ active }: { active?: boolean }) {
   );
 }
 
+const STATE_CONTENT: Record<AssistantState, { title: string; caption: string }> = {
+  initial: {
+    title: "Olá",
+    caption: "Toque no botão principal para começar a falar",
+  },
+  listening: {
+    title: "Ouvindo",
+    caption: "Toque no botão principal novamente para enviar",
+  },
+  processing: {
+    title: "Aguarde",
+    caption: "Estou processando suas informações",
+  },
+  conversation: {
+    title: "",
+    caption: "",
+  },
+};
+
 function Assistant() {
   const router = useRouter();
   const data = useMooneyData();
@@ -53,7 +76,7 @@ function Assistant() {
   const [text, setText] = useState("");
 
   const [recording, setRecording] = useState(false);
-  const [busy, setBusy] = useState<false | "transcrevendo" | "pensando">(false);
+  const [busy, setBusy] = useState(false);
   const [reply, setReply] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
@@ -61,10 +84,22 @@ function Assistant() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  const contentState: AssistantState = busy
+    ? "processing"
+    : reply || error
+      ? "conversation"
+      : recording
+        ? "listening"
+        : "initial";
+
+  // O botão segue a gravação mesmo com resposta na tela: gravar de novo
+  // dentro da conversa mostra o botão verde animado.
+  const buttonState: AssistantState = busy ? "processing" : recording ? "listening" : contentState;
+
   async function runAgent(message: string) {
     if (!message.trim()) return;
     setTranscript(message);
-    setBusy("pensando");
+    setBusy(true);
     setError(null);
     try {
       const result = await askFinancialAgent({ data: { message, data } });
@@ -93,7 +128,7 @@ function Assistant() {
           setError("Gravação muito curta. Tente novamente.");
           return;
         }
-        setBusy("transcrevendo");
+        setBusy(true);
         try {
           const buffer = await blob.arrayBuffer();
           let binary = "";
@@ -131,57 +166,59 @@ function Assistant() {
     setRecording(false);
   }
 
-  const answered = Boolean(reply) || Boolean(error) || Boolean(busy);
+  function resetToInitial() {
+    setReply(null);
+    setError(null);
+    setTranscript(null);
+  }
 
   return (
     <PhoneFrame>
-      {answered ? (
+      {contentState === "conversation" ? (
         <div className="flex flex-1 flex-col overflow-y-auto px-6 pt-12">
           {transcript && (
             <p className="mb-4 text-[13px] font-medium text-mooney-black-50">“{transcript}”</p>
           )}
-          {busy && (
-            <p className="text-[20px] leading-[28px] text-mooney-black-50">
-              {busy === "transcrevendo" ? "Transcrevendo seu áudio…" : "Analisando suas finanças…"}
-            </p>
-          )}
-          {!busy && error && (
+          {error ? (
             <p className="text-[16px] leading-[24px] text-mooney-black">{error}</p>
-          )}
-          {!busy && !error && reply && (
-            <>
-              <p className="whitespace-pre-wrap text-[20px] leading-[28px] text-mooney-black">
-                {reply}
-              </p>
-              <p className="mt-6 text-[13px] font-medium text-mooney-black-50">
-                Saldo atual: R${formatBRL(data.summary.globalBalance)}
-              </p>
-              <div className="mt-5 flex gap-2">
-                <button
-                  type="button"
-                  aria-label="Gostei"
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-mooney-gray"
-                >
-                  <Icon name="like" size={12} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Não gostei"
-                  className="flex h-6 w-6 items-center justify-center rounded-full bg-mooney-gray"
-                >
-                  <Icon name="dislike" size={12} />
-                </button>
-              </div>
-            </>
+          ) : (
+            reply && (
+              <>
+                <p className="whitespace-pre-wrap text-[20px] leading-[28px] text-mooney-black">
+                  {reply}
+                </p>
+                <p className="mt-6 text-[13px] font-medium text-mooney-black-50">
+                  Saldo atual: R${formatBRL(data.summary.globalBalance)}
+                </p>
+                <div className="mt-5 flex gap-2">
+                  <button
+                    type="button"
+                    aria-label="Gostei"
+                    className="flex h-6 w-6 items-center justify-center rounded-full bg-mooney-gray"
+                  >
+                    <Icon name="like" size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Não gostei"
+                    className="flex h-6 w-6 items-center justify-center rounded-full bg-mooney-gray"
+                  >
+                    <Icon name="dislike" size={12} />
+                  </button>
+                </div>
+              </>
+            )
           )}
         </div>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
           <h1 className="text-[32px] font-normal leading-[36px] text-mooney-black">
-            Olá, {data.user.name}!
+            {contentState === "initial"
+              ? `Olá, ${data.user.name}!`
+              : STATE_CONTENT[contentState].title}
           </h1>
-          <p className="mt-2 text-[16px] font-normal text-mooney-black">
-            {recording ? "Estou ouvindo… toque para enviar" : "Vamos lá, o Mooney já te ouvindo"}
+          <p className="mt-2 max-w-[240px] text-[16px] font-normal text-mooney-black">
+            {STATE_CONTENT[contentState].caption}
           </p>
         </div>
       )}
@@ -217,13 +254,7 @@ function Assistant() {
           type="button"
           aria-label="Voltar"
           onClick={() => {
-            if (answered) {
-              setReply(null);
-              setError(null);
-              setTranscript(null);
-            } else {
-              void router.navigate({ to: "/" });
-            }
+            void router.navigate({ to: "/" });
           }}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-mooney-gray"
         >
@@ -232,14 +263,24 @@ function Assistant() {
 
         <button
           type="button"
-          aria-label={recording ? "Parar gravação e enviar" : "Gravar áudio"}
-          disabled={Boolean(busy)}
+          aria-label={buttonState === "listening" ? "Parar gravação e enviar" : "Gravar áudio"}
+          disabled={buttonState === "processing"}
           onClick={() => (recording ? stopRecording() : void startRecording())}
-          className={`flex h-12 w-[104px] items-center justify-center rounded-full disabled:opacity-50 ${
-            recording ? "bg-mooney-black" : "bg-mooney-green"
+          className={`flex h-12 w-[104px] items-center justify-center rounded-full ${
+            buttonState === "listening" ? "bg-mooney-green" : "bg-mooney-black"
           }`}
         >
-          {recording ? <Icon name="waveOff" size={32} invert /> : <Waveform active />}
+          {buttonState === "listening" ? (
+            <Waveform active />
+          ) : (
+            <img
+              src={buttonState === "processing" ? waveOff : waveOn}
+              alt=""
+              aria-hidden
+              width={74}
+              height={20}
+            />
+          )}
         </button>
 
         <button

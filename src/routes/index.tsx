@@ -3,7 +3,7 @@ import { PhoneFrame } from "@/components/mooney/PhoneFrame";
 import { BottomNav } from "@/components/mooney/BottomNav";
 import { Icon } from "@/components/mooney/icons";
 import { useMooneyData } from "@/hooks/use-mooney-data";
-import { formatBRL } from "@/lib/mooney-data";
+import { formatBRL, getMonthlySpentBalance } from "@/lib/mooney-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,19 +28,25 @@ function Home() {
   const data = useMooneyData();
   const { summary, recommendation } = data;
   const usage = Math.round((summary.currentExpenses / summary.budgetLimit) * 100);
+  const monthlySpentBalance = getMonthlySpentBalance(data);
 
   return (
     <PhoneFrame>
       <div className="flex flex-1 flex-col px-5 pt-14">
         <div className="flex flex-grow items-center justify-center">
           <h1 className="text-center text-[32px] font-normal leading-[36px] text-mooney-black">
-            Você tem nova recomendação
+            {usage > 100 ? 'Você ultrapassou a meta de gastos' : 'Você tem nova recomendação'}
           </h1>
         </div>
         <div className="mt-auto flex flex-col gap-2 pb-2">
           <section className="rounded-[24px] bg-mooney-gray p-5">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[13px] font-semibold text-mooney-black">Saldo Global R$</h2>
+              <div className="flex flex-col flex-start">
+                <h2 className="text-[13px] font-semibold text-mooney-black">Saldo Disponível R$</h2>
+                <p className="text-[11px] font-semibold text-mooney-black-50">
+                  Meta de Gastos
+                </p>
+              </div>
               <div className="flex shrink-0 gap-2">
                 <button
                   type="button"
@@ -59,22 +65,19 @@ function Home() {
               </div>
             </div>
             <p className="mt-10 text-right text-[32px] leading-[1.25] font-semibold text-mooney-black">
-              {formatBRL(summary.globalBalance)}
-            </p>
-            <p className="text-right text-[11px] font-semibold text-mooney-black-50">
-              + {summary.lastMonthComparisonPercent}% / mês passado
+              {formatBRL(monthlySpentBalance)}
             </p>
           </section>
 
           <section className="relative h-[64px] overflow-hidden rounded-[24px] bg-mooney-gray">
             <div
-              className="absolute inset-y-0 left-0 bg-mooney-green rounded-[24px] transition-all duration-500"
+              className={`absolute inset-y-0 left-0 rounded-[24px] transition-all duration-500 ${usage > 95 ? "bg-mooney-warning" : "bg-mooney-green"}`}
               style={{ width: `${usage}%` }}
             />
             <div className="relative z-10 flex h-full items-center justify-between px-5">
               <div>
                 <p className="text-[14px] leading-[1.25] font-medium text-mooney-black">Gastos Atuais</p>
-                <p className="text-[11px] leading-[1.25] font-medium text-mooney-black-50">Agosto/2026</p>
+                <p className="text-[11px] leading-[1.25] font-medium text-mooney-black-50">R$ {summary.currentExpenses}</p>
               </div>
               <span className="text-[14px] font-medium text-mooney-black">{usage}%</span>
             </div>

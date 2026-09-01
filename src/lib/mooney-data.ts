@@ -8,7 +8,12 @@ export type Transaction = {
 };
 
 export type MooneyData = {
-  user: { name: string; monthlyGoal: number };
+  user: {
+    name: string;
+    monthlySpentGoal: number;
+    globalInitialBalance: number;
+    globalBalanceGoal: number
+  };
   summary: {
     globalBalance: number;
     lastMonthComparisonPercent: number;
@@ -27,13 +32,18 @@ export type MooneyData = {
 export const MOONEY_STORAGE_KEY = "mooney_data";
 
 export const defaultMooneyData: MooneyData = {
-  user: { name: "Jeff", monthlyGoal: 15000.0 },
+  user: {
+    name: "Jeff",
+    monthlySpentGoal: 9000.0,
+    globalInitialBalance: 12595.0,
+    globalBalanceGoal: 15600.0
+  },
   summary: {
-    globalBalance: 17482.0,
+    globalBalance: 18063.43,
     lastMonthComparisonPercent: 23,
-    currentExpenses: 12580.0,
-    budgetLimit: 17482.0,
-    predictedEndMonthBalance: 14200.0,
+    currentExpenses: 6531.57,
+    budgetLimit: 9000.0,
+    predictedEndMonthBalance: 16100.0,
     monthlySavingsRecommendation: {
       total: 96.0,
       transationsIds: ["5", "11"]
@@ -47,7 +57,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "1",
       description: "Supermercado",
-      amount: 450.0,
+      amount: 850.00,
       type: "expense",
       category: "Alimentação",
       date: "2026-08-28"
@@ -55,7 +65,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "2",
       description: "Restaurante",
-      amount: 120.0,
+      amount: 185.50,
       type: "expense",
       category: "Alimentação",
       date: "2026-08-29"
@@ -63,7 +73,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "3",
       description: "Posto de Combustível",
-      amount: 210.0,
+      amount: 250.00,
       type: "expense",
       category: "Transporte",
       date: "2026-08-30"
@@ -71,7 +81,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "4",
       description: "Salário",
-      amount: 8900.00,
+      amount: 12000.00,
       type: "income",
       category: "Salário",
       date: "2026-08-01"
@@ -87,7 +97,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "6",
       description: "Aluguel",
-      amount: 2150.00,
+      amount: 3200.00,
       type: "expense",
       category: "Moradia",
       date: "2026-08-01"
@@ -95,7 +105,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "7",
       description: "Conta de Luz",
-      amount: 180.00,
+      amount: 245.80,
       type: "expense",
       category: "Moradia",
       date: "2026-08-10"
@@ -103,7 +113,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "8",
       description: "Internet",
-      amount: 120.00,
+      amount: 149.90,
       type: "expense",
       category: "Moradia",
       date: "2026-08-01"
@@ -111,7 +121,7 @@ export const defaultMooneyData: MooneyData = {
     {
       id: "9",
       description: "Supermercado",
-      amount: 280.00,
+      amount: 620.47,
       type: "expense",
       category: "Alimentação",
       date: "2026-08-15"
@@ -131,12 +141,31 @@ export const defaultMooneyData: MooneyData = {
       type: "expense",
       category: "Assinaturas",
       date: "2026-08-20"
+    },
+    {
+      id: "12",
+      description: "Farmácia",
+      amount: 168.90,
+      type: "expense",
+      category: "Saúde",
+      date: "2026-08-22"
+    },
+    {
+      id: "13",
+      description: "Academia",
+      amount: 130.00,
+      type: "expense",
+      category: "Saúde",
+      date: "2026-08-02"
     }
   ],
 };
 
-export function loadMooneyData(): MooneyData {
-  if (typeof window === "undefined") return defaultMooneyData;
+export function getMonthlySpentBalance(data: MooneyData): number {
+  return data.user.monthlySpentGoal - data.summary.currentExpenses;
+}
+
+export function loadMooneyData(): MooneyData {  if (typeof window === "undefined") return defaultMooneyData;
   try {
     const raw = window.localStorage.getItem(MOONEY_STORAGE_KEY);
     if (!raw) {
