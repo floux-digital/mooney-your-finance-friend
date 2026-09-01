@@ -60,3 +60,32 @@ export function loadMooneyData(): MooneyData {
 
 export const formatBRL = (value: number) =>
   new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+
+export const MOONEY_UPDATED_EVENT = "mooney_data_updated";
+
+export function saveMooneyData(data: MooneyData) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(MOONEY_STORAGE_KEY, JSON.stringify(data));
+  window.dispatchEvent(new CustomEvent(MOONEY_UPDATED_EVENT));
+}
+
+export function addTransaction(tx: Omit<Transaction, "id">): MooneyData {
+  const current = loadMooneyData();
+  const transaction: Transaction = { ...tx, id: `${Date.now()}` };
+  const isExpense = tx.type === "expense";
+  const delta = isExpense ? -tx.amount : tx.amount;
+
+  const next: MooneyData = {
+    ...current,
+    summary: {
+      ...current.summary,
+      globalBalance: current.summary.globalBalance + delta,
+      currentExpenses: current.summary.currentExpenses + (isExpense ? tx.amount : 0),
+      predictedEndMonthBalance: current.summary.predictedEndMonthBalance + delta,
+    },
+    transactions: [transaction, ...current.transactions],
+  };
+
+  saveMooneyData(next);
+  return next;
+}
